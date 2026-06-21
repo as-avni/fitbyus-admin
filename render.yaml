@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: fitbyus-backend
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm run server
+    envVars:
+      - key: PORT
+        value: 5002
+      - key: DATABASE_URL
+        sync: false # Set this to your Neon PostgreSQL connection string during deployment
+      - key: GEMINI_API_KEY
+        sync: false # Set this to your Gemini API Key
+      - key: JWT_SECRET
+        generateValue: true # Generates a random secure key automatically
