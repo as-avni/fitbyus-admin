@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5002/api";
+const API_BASE = (import.meta as any).env.VITE_API_BASE_URL || "http://localhost:5002/api";
 
 export function getToken(): string | null {
   return localStorage.getItem("token");
@@ -48,7 +48,8 @@ export function connectChatSocket(onMessage: (msg: any) => void): { close: () =>
   const token = getToken();
   if (!token) return null;
 
-  const ws = new WebSocket(`ws://localhost:5002?token=${encodeURIComponent(token)}`);
+  const wsUrl = (import.meta as any).env.VITE_WS_BASE_URL || "ws://localhost:5002";
+  const ws = new WebSocket(`${wsUrl}?token=${encodeURIComponent(token)}`);
 
   ws.onmessage = (event) => {
     try {
