@@ -1,0 +1,124 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  role         String        // "ADMIN" | "COACH" | "CLIENT"
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Relations
+  clientProfile UserProfile?
+  coachProfile  CoachProfile?
+  
+  // Messaging
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+}
+
+model UserProfile {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  age           Int
+  gender        String
+  weight        Float
+  height        Float
+  goal          String   // "Fat Loss" | "Muscle Gain" | "Maintenance"
+  activityLevel String   // "Sedentary" | "Lightly Active" | "Moderate" | "Very Active"
+  dietType      String   // "Vegan" | "Vegetarian" | "Non-veg"
+  updatedAt     DateTime @updatedAt
+
+  // Coach assignment
+  coachId       String?
+  coach         CoachProfile? @relation(fields: [coachId], references: [id])
+
+  // Plans & progress
+  dietPlans     DietPlan[]
+  workoutPlans  WorkoutPlan[]
+  checkIns      CheckIn[]
+}
+
+model CoachProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experience     String   // e.g. "5 years"
+  certification  String   // e.g. "ACE Certified"
+  commissionRate Float    @default(30.0)
+  status         String   // "PENDING" | "APPROVED" | "REJECTED"
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  clients      UserProfile[]
+  dietPlans    DietPlan[]
+  workoutPlans WorkoutPlan[]
+}
+
+model DietPlan {
+  id          String      @id @default(uuid())
+  clientId    String
+  client      UserProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  coachId     String?
+  coach       CoachProfile? @relation(fields: [coachId], references: [id])
+  calories    Int
+  protein     Float
+  carbs       Float
+  fat         Float
+  meals       String      // Serialized JSON array of meals
+  groceryList String      // Serialized JSON array of grocery items
+  type        String      // "AI" | "COACH"
+  createdAt   DateTime    @default(now())
+}
+
+model WorkoutPlan {
+  id        String      @id @default(uuid())
+  client    UserProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId  String
+  coachId   String?
+  coach     CoachProfile? @relation(fields: [coachId], references: [id])
+  splitName String      // e.g. "Push-Pull-Legs"
+  days      String      // Serialized JSON containing exercises, sets, reps, rest
+  createdAt DateTime    @default(now())
+}
+
+model CheckIn {
+  id           String      @id @default(uuid())
+  clientId     String
+  client       UserProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  weight       Float
+  energyLevel  String
+  sleepQuality String
+  notes        String
+  createdAt    DateTime    @default(now())
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Transformation {
+  id             String   @id @default(uuid())
+  title          String
+  description    String
+  beforePhotoUrl String
+  afterPhotoUrl  String
+  useInAds       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+}
